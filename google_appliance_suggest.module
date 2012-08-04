@@ -11,7 +11,7 @@
  * Default module settings.
  */
 define('SGAS_DEFAULT_MAX', 5);
-define('SGAS_DEFAULT_CACHE', 1);
+define('SGAS_DEFAULT_CACHE', 0);
 define('SGAS_DEFAULT_HIDE_THROBBER', 1);
 define('SGAS_DEFAULT_AUTOSUBMIT', 1);
 
