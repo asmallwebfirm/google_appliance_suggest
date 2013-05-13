@@ -1,5 +1,16 @@
 (function ($) {
   /**
+   * CJK regex patterns:
+   * JP - Hiragana               \u3040-\u309F
+   * JP - Katakana               \u30A0-\u30FF
+   * KO - Hangul alphabet        \uAC00-\uD7AF\u1100-\u11FF\u3130-\u318F\u3200-\u32FF\uA960-\uA97F\uD7B0-\uD7FF\uFF00-\uFFEF
+   * CJK Unified Ideographs      \u4E00-\u9FFF
+   */
+
+  var cjkFlag = false;
+  var cjkRegex = /[\u3040-\u309F\u30A0-\u30FF\uAC00-\uD7AF\u1100-\u11FF\u3130-\u318F\u3200-\u32FF\uA960-\uA97F\uD7B0-\uD7FF\uFF00-\uFFEF\u4E00-\u9FFF]+?/g;
+
+  /**
    * Overwrites Drupal's default in misc/autocomplete.js to submit when
    * selected. This applies to clicking only.
    */
@@ -18,6 +29,15 @@
     if (!e) {
       e = window.event;
     }
+
+    /**
+     * Check if the last two characters contain a CJK symbol, using 2 chars
+     * to account for syllable input.
+     */
+    var lcharFlag = input.value.charAt(input.value.length-2).match(cjkRegex);
+
+    cjkFlag = (cjkRegex.test(input.value)) ? true : false;
+
     switch (e.keyCode) {
       case 16: // Shift.
       case 17: // Ctrl.
@@ -34,6 +54,14 @@
         return true;
 
       case 13: // Enter.
+        if (cjkFlag && input.value.length > 0) {
+          this.populatePopup();
+          return false;
+        }
+        else {
+          this.hidePopup(e.keyCode);
+        }
+
         this.hidePopup(e.keyCode);
         this.input.form.submit();
         return true;
@@ -44,10 +72,13 @@
         return true;
 
       default: // All other keys.
-        if (input.value.length > 0)
+        if (!cjkFlag && input.value.length > 0 && lcharFlag === null){
+          // Immediate populate with non-CJK characters.
           this.populatePopup();
-        else
+        }
+        else {
           this.hidePopup(e.keyCode);
+        }
         return true;
     }
   };
