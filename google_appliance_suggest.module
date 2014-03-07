@@ -38,7 +38,7 @@ function google_appliance_suggest_form_alter(&$form, &$form_state, $form_id) {
       // Set up the path for the autocomplete callback.
       $module = drupal_get_path('module', 'google_appliance_suggest');
       $file = 'google_appliance_suggest_callback.php';
-      $autocomplete_path = $base_url . '/' . $module . '/' . $file;
+      $autocomplete_path = $base_url . '/' . $module . '/' . $file . '?q=';
 
       // Attach the autocomplete callback.
       if ($form_id == 'google_appliance_search_form') {

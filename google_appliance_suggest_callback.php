@@ -37,7 +37,7 @@ if (function_exists('drupal_bootstrap')) {
   // Make sure we have a valid GSA host to connect to.
   if ($gsa_hostname) {
     // Build the search term to pass to GSA
-    $search_query = str_replace(basename(__FILE__) . '/', '', $_GET['q']);
+    $search_query = $_GET['q'];
 
     // Create a list of query parameters from configurations.
     $get = array(
