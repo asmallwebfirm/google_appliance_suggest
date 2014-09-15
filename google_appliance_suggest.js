@@ -15,17 +15,27 @@
    * selected. This applies to clicking only.
    */
   Drupal.jsAC.prototype.select = function (node) {
-    this.input.value = $(node).data('autocompleteValue');
+    input.value = $(node).data('autocompleteValue');
     if($(this.input).hasClass('auto_submit')){
       this.input.form.submit();
     }
   };
 
   /**
-   * Overwrites Drupal's default in misc/autocomplete.js to submit when a user
-   * hits the enter key. Otherwise, it behaves normally.
+   * Overwrites Drupal's default in misc/autocomplete.js to:
+   *
+   * - Conditionally allow "Enter" key to submit the form.
+   * - Ignore keypresses that don't change the input's value.
+   * - Handle CJK characters.
+   *
+   * Otherwise, it behaves normally.
    */
-  Drupal.jsAC.prototype.onkeyup = function (input, e) {
+  Drupal.jsAC.prototype.onkeyup = function keyupHandler(input, e) {
+    var changed = $.trim(input.value) !== $.trim(this._value);
+
+    // Store the input value.
+    this._value = input.value;
+
     if (!e) {
       e = window.event;
     }
@@ -39,40 +49,27 @@
     cjkFlag = (cjkRegex.test(input.value)) ? true : false;
 
     switch (e.keyCode) {
-      case 16: // Shift.
-      case 17: // Ctrl.
-      case 18: // Alt.
-      case 20: // Caps lock.
-      case 33: // Page up.
-      case 34: // Page down.
-      case 35: // End.
-      case 36: // Home.
-      case 37: // Left arrow.
-      case 38: // Up arrow.
-      case 39: // Right arrow.
-      case 40: // Down arrow.
-        return true;
-
       case 13: // Enter.
-        if (cjkFlag && input.value.length > 0) {
+        var settings = $(input.form).data('settings') || {submitEnter: true};
+
+        if (!settings.submitEnter || (cjkFlag && input.value.length > 0)) {
           this.populatePopup();
           return false;
         }
-        else {
-          this.hidePopup(e.keyCode);
-        }
-
         this.hidePopup(e.keyCode);
-        this.input.form.submit();
+        input.form.submit();
         return true;
 
-      case 9:  // Tab.
       case 27: // Esc.
         this.hidePopup(e.keyCode);
         return true;
 
       default: // All other keys.
-        if (!cjkFlag && input.value.length > 0 && lcharFlag === null){
+        // Ignore unchanged input value.
+        if (!changed) {
+          return true;
+        }
+        else if (!cjkFlag && input.value.length > 0 && lcharFlag === null){
           // Immediate populate with non-CJK characters.
           this.populatePopup();
         }
