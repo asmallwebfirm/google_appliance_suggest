@@ -55,7 +55,45 @@ if (function_exists('drupal_bootstrap')) {
       CURLOPT_HEADER => 0,
       CURLOPT_RETURNTRANSFER => TRUE,
       CURLOPT_TIMEOUT => check_plain($gsa_timeout)
-    ); 
+    );
+
+    // Use drupal proxy if any.
+    $drupal_proxy_server = variable_get('proxy_server', '');
+    $drupal_proxy_port = variable_get('proxy_port', '');
+    $drupal_proxy_username = variable_get('proxy_username', '');
+    $drupal_proxy_password = variable_get('proxy_password', '');
+    $drupal_proxy_user_agent = variable_get('proxy_user_agent', NULL); // NULL as default value
+    $drupal_proxy_exceptions = variable_get('proxy_exceptions', array());
+
+    // Add drupal proxy to curl_defaults.
+    if ($drupal_proxy_server != '') {
+        // Parse gsa_hostname to obtain the host without the scheme (http/https).
+        // Check if a proxy should be used for gsa_hostname using _drupal_http_use_proxy
+        // If parsing fails (and it should not), use the proxy. The idea here is that we should always use the proxy
+        // except for some exceptional hosts. If we are not able to confirm that this is indeed an exception
+        // better to use the proxy.
+        $gsa_hostname_components = @parse_url($gsa_hostname);
+        if ($gsa_hostname_components === false || _drupal_http_use_proxy($gsa_hostname_components['host'])) {
+            $curl_defaults[CURLOPT_PROXY] = $drupal_proxy_server;
+            // Add port, if provided.
+            if ($drupal_proxy_port != '') {
+                $curl_defaults[CURLOPT_PROXY] .= ':' . $drupal_proxy_port;
+            }
+
+            // Some proxies reject requests with any User-Agent headers, while others
+            // require a specific one.
+            if ($drupal_proxy_user_agent !== NULL) {
+                $curl_defaults[CURLOPT_USERAGENT] = $drupal_proxy_user_agent;
+            }
+        }
+
+        // Set authentication, if needed, checking if proxy_username is not empty.
+        if ($drupal_proxy_username != '') {
+            // The option CURLOPT_PROXYUSERPWD has format [username]:[password].
+            $curl_defaults[CURLOPT_PROXYUSERPWD] = $drupal_proxy_username . ':' . $drupal_proxy_password;
+        }
+    }
+
     $ch = curl_init();
     curl_setopt_array($ch, $curl_defaults);
     $result = array(
