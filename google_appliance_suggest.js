@@ -15,7 +15,7 @@
    * selected. This applies to clicking only.
    */
   Drupal.jsAC.prototype.select = function (node) {
-    input.value = $(node).data('autocompleteValue');
+    this.input.value = $(node).data('autocompleteValue');
     if($(this.input).hasClass('auto_submit')){
       this.input.form.submit();
     }
